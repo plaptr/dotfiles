@@ -1,0 +1,82 @@
+#!/usr/bin/env sh
+
+
+# for this to work you must configure sudo such that
+# it will be able to run the command without password
+#
+# see this wiki page for information:
+#  - https://github.com/koekeishiya/yabai/wiki/Installing-yabai-(latest-release)#configure-scripting-addition
+#
+# yabai -m signal --add event=dock_did_restart action="sudo yabai --load-sa"
+# sudo yabai --load-sa
+
+sudo yabai --load-sa
+yabai -m signal --add event=dock_did_restart action="sudo yabai --load-sa"
+
+# global settings
+yabai -m config external_bar                 all:0:0
+yabai -m config mouse_follows_focus          on 
+# yabai -m config focus_follows_mouse          autofocus 
+yabai -m config window_placement             second_child
+yabai -m config window_topmost               on 
+yabai -m config window_opacity               off
+yabai -m config window_opacity_duration      0.0
+yabai -m config window_shadow                off 
+yabai -m config insert_feedback_color        0xaad75f5f
+yabai -m config active_window_opacity        1.0
+yabai -m config normal_window_opacity        1.0
+yabai -m config split_ratio                  0.50
+yabai -m config auto_balance                 off 
+yabai -m config mouse_modifier               fn
+yabai -m config mouse_action1                move
+yabai -m config mouse_action2                resize
+
+# general space settings
+yabai -m config layout                       bsp
+yabai -m config top_padding                  0
+yabai -m config bottom_padding               0
+yabai -m config left_padding                 0
+yabai -m config right_padding                0 
+yabai -m config window_gap                   0
+
+# rules
+## makes system preferences always floating
+yabai -m rule --add app="^System Settings$" manage=off
+
+function setup_space {
+  local idx="$1"
+  local name="$2"
+  local space=
+  echo "setup space $idx : $name"
+
+  space=$(yabai -m query --spaces --space "$idx")
+  if [ -z "$space" ]; then
+    yabai -m space --create
+  fi
+
+  yabai -m space "$idx" --label "$name"
+}
+
+for _ in $(yabai -m query --spaces | jq '.[].index | select(. > 6)'); do
+  yabai -m space --destroy 7
+done
+
+for idx in $(yabai -m query --spaces | jq '.[].index | select(. > 0)'); do 
+    yabai -m space "$idx" --display 2
+done
+
+
+setup_space 1 browser_svago
+setup_space 2 browser_codice
+setup_space 3 terminale
+setup_space 4 spotify
+setup_space 5 extra
+
+
+yabai -m rule --add app="^Brave Browser|Safari$" space=browser_svago
+yabai -m rule --add app="^iTerm2$" space=terminale
+yabai -m rule --add app="^Spotify$" space=spotify
+
+
+
+echo "yabai configuration loaded.."
